@@ -1,124 +1,144 @@
 # boring tools
 
-Agent-driven video editing with ffmpeg, whisper, and python. No timeline, no project file,
-no subscription, nothing uploaded anywhere.
+**Claude edits your video. You talk, it works.**
 
-The whole idea is one sentence: **the edit is text.** Every cut, every caption, every graphic
-placement is a number in a file your agent can read, diff, and re-render. You give direction in
-plain language ("cards bigger", "put the phone beside my head", "remove the white plug behind my
-head"), the agent edits numbers in files, and one command rebuilds the entire set.
+You don't cut anything. You don't open a timeline. You hand it a recording, tell it what you want the
+way you'd tell a person and watch it happen in the terminal.
 
-I shot a 23 minute 4K one-take, and this pipeline cut it into twelve finished ad renders in three
-lengths and two aspect ratios, captioned, with brand graphics composited into the empty wall beside
-me, and every render verified frame-exact against its audio. I have never opened an editor.
+I shot one take on my phone and got twelve finished ads back. Three lengths, two aspect ratios,
+captions burned in, brand cards on the wall beside my head. I haven't opened an editing app since
+July.
 
-    $ python3 verify.py
-    jayla-ad-60-16x9.mp4     1920x1080   1615   53.833   53.833   0.000ms  PASS
-    ... 12 files, all PASS
+You don't need to be technical for this. You need to know what you want.
 
-## Why it works better than a video tool
+## Do this
 
-A timeline is a binary blob. An agent cannot read it, cannot diff it, cannot tell you what changed,
-and cannot re-render it after a note. So every round of feedback goes back through a human dragging
-clips.
+**A. Install the two free things.**
 
-Text does not have that problem. `cuts.tsv` holds nineteen lines that say which moments to keep and
-what to call them. `timeline.tsv` is what those lines compiled to, quantized to the frame.
-`subject-edge.tsv` holds the measured pixel column where the wall behind me starts. When I say the
-cards are too small, the fix is one file, one command, and every one of the twelve renders inherits
-it. Nothing is hand-tuned twice.
+```
+brew install ffmpeg whisper-cpp
+pip install pillow numpy
+```
+
+**B. Give your agent the instructions.**
+
+```
+git clone https://github.com/brookejlacey/boring-tools
+mkdir -p your-project/scripts your-project/.claude/skills/boring-tools
+cp -r boring-tools/scripts/. your-project/scripts/
+cp boring-tools/verify.py your-project/scripts/
+cp boring-tools/SKILL.md your-project/.claude/skills/boring-tools/SKILL.md
+```
+
+**C. Tell it what you want.**
+
+```
+here's my recording: ~/Movies/take.mov
+cut the dead air, give me a 15, a 30 and a 60, vertical and landscape,
+burn in captions and put my brand cards on the empty wall to my right
+```
+
+That's it. It reads the instructions, does the work and shows you every step as it goes.
+
+## Things worth saying to it
+
+Real notes that produced real changes. Say them like this.
+
+- *cut the dead air*
+- *the cards are too small*
+- *put the phone beside my head instead of over my face*
+- *take that white plug off the wall behind my head*
+- *find my product's site and build the cards from whatever branding you find*
+- *my eyes jump between cuts, fix it*
+- *prove the audio still lines up*
+
+That last one matters more than it looks. Ask it to prove its work and it will write itself a check
+that fails loudly next time.
+
+## Where this runs
+
+Claude Code in a terminal. The desktop app is the same thing with a window around it, so that works
+too. The browser version won't, because your footage isn't in it.
+
+Everything runs on your own machine. Nothing gets uploaded, so your face and your voice stay where you
+left them.
+
+---
+
+# Appendix: what's actually happening
+
+You can stop reading at the line above and this still works. The rest is for when something breaks, or
+when you want to know why it made a choice.
+
+## The one idea
+
+**The edit is text.** No timeline, no project file. Decisions live in a `cuts.tsv` holding a start, an
+end, a framing and a name per cut. That compiles to a `timeline.tsv` snapped to the frame grid.
+
+That is why a note works at all. An agent can read a text file, change one number and rebuild every
+output. It can do none of that to a timeline blob, which is why every other approach ends with you
+back in the app dragging rectangles.
+
+You are not meant to edit those files by hand. They exist so the agent has something it can address.
 
 ## The chain
 
-Each of these is boring on purpose. There is no model in the loop doing the actual video work.
-
 | Step | Tool | What it does |
 |---|---|---|
-| 1 | `vad-spans.py` | Finds where speech is, off the audio envelope. Run this **before** transcribing, or long silences make the transcriber hallucinate. |
-| 2 | `speech-spans.py`, `word-spans.py` | Per-span transcription with word-level timestamps. Words are what captions and beat matching both need. |
-| 3 | `take_cutlist.py`, `take-cutlist.sh` | One long recording usually holds many attempts at the same line. Groups repeats, flags the last attempt as the keeper, proposes rather than cuts. |
-| 4 | `match-beats.py` | Locates a scripted beat inside a long take, so a written outline can address footage. |
-| 5 | `face-track.py` | Where the face is per frame, so a crop can follow it. Run detection on a square crop, not the full frame. |
-| 6 | `eyeline.py` | Keeps eyes on the same horizontal line across cuts of different framings, which is the difference between a cut and a jolt. |
-| 7 | `subject-bounds.py` | Measures the subject's real edge and top per cut. This is the tool that replaced a hand-typed constant that was 286 pixels wrong. |
-| 8 | `assemble-cuts.py` | Reads `cuts.tsv`, emits `timeline.tsv`, renders, and asserts sync before it will call the render finished. |
-| 9 | `broll-screens.py` | Composites screen recordings. `--column` puts a phone in the wall beside the speaker instead of taking the whole frame. |
-| 10 | `wall-graphics.py` | Brand cards scheduled off cut **labels**, not timestamps, so one plan serves the 15, the 30, and the 60, and survives a recut. |
-| 11 | `caption-burn.py` | One word at a time, white with a black outline, rasterized with Pillow. Composites b-roll and graphics in the same pass so the job costs one encode generation. |
-| 12 | `wall-clean.py` | Removes a fixed object from a wall across every frame by borrowing clean wall from the same frame. Nothing is synthesised. |
+| 1 | `vad-spans.py` | Finds speech off the audio envelope. Run **before** transcribing, or silence makes the transcriber hallucinate. |
+| 2 | `speech-spans.py`, `word-spans.py` | Per-span transcription with word-level timing. |
+| 3 | `take_cutlist.py` | Groups repeated attempts at the same line, flags the last as the keeper. Proposes, never cuts. |
+| 4 | `match-beats.py` | Finds a scripted beat inside a long take. |
+| 5 | `face-track.py` | Face per frame so crops follow. Detection runs on a square crop. |
+| 6 | `eyeline.py` | Holds eyes on one line across cuts of different tightness. |
+| 7 | `subject-bounds.py` | Measures the subject's real edge and top per cut. Replaced a typed constant that was 286px wrong. |
+| 8 | `assemble-cuts.py` | `cuts.tsv` in, `timeline.tsv` out, renders, asserts sync. |
+| 9 | `broll-screens.py` | Screen recordings. `--column` puts a phone in the wall beside the speaker. |
+| 10 | `wall-graphics.py` | Brand cards, scheduled off cut **labels** so one plan serves every length and survives a recut. |
+| 11 | `caption-burn.py` | One word at a time. Composites the other layers in the same pass so the job costs one encode generation. |
+| 12 | `wall-clean.py` | Removes a fixed object from a wall across a whole take by borrowing clean wall from the same frame. |
+| 13 | `verify.py` | Dimensions, frame count, audio against video, drift off the grid. Non-zero exit on failure. |
 
-Extras: `blur-background.py` (background matting, span aware so it only mattes kept frames),
-`clip_rank.py` (scores windows of a long recording for clip potential), `tighten.sh`,
-`cut-silence.sh`, `assemble-spans.sh`.
+Extras: `blur-background.py`, `clip_rank.py`, `tighten.sh`, `cut-silence.sh`, `assemble-spans.sh`.
 
-## Install
+One `rebuild.sh` per shoot runs the whole chain in order. `example/` holds the real cut list, timeline
+and measured geometry from the shoot this was built on.
 
-macOS, Apple Silicon. Everything is local.
+## Failure modes already paid for
 
-    brew install ffmpeg whisper-cpp
-    pip install pillow numpy
+Every tool carries its failed approaches in its docstring with the reason each one failed. An agent
+handed a clean tool will re-derive the same wrong answers, so the wrong answers live next to the right
+one.
 
-Then point your agent at `SKILL.md`. That file is the part that matters: it is the operating
-instructions the agent reads, including the failure modes it must not re-derive.
-
-    git clone https://github.com/brookejlacey/boring-tools
-    cp -r boring-tools/scripts your-project/scripts/
-    cp boring-tools/SKILL.md your-project/.claude/skills/boring-tools/SKILL.md
-
-## The one command
-
-Every shoot gets a `rebuild.sh` that is the entire chain for that footage, in dependency order,
-with the reasoning in comments. See `example/rebuild.sh`. Reading it tells you exactly how a set
-was built, and running it rebuilds all twelve files from source. That script is the project file.
-
-## What is recorded in here, and why that is the valuable part
-
-Every one of these tools carries its failed approaches in its docstring, with the reason each one
-failed. That is deliberate. An agent handed a clean tool will cheerfully re-derive the same three
-wrong answers, so the wrong answers are written down next to the right one.
-
-A few of them, so you can see the shape:
-
-- **Resolve phone rotation before doing any geometry.** A vertical recording carries rotation
-  metadata, so the pixels and the numbers disagree until you settle it.
-- **Never measure a wall against a single reference column.** A room falls off in brightness across
-  frame, roughly 15 levels in mine, and a naive detector reports that gradient as the subject and
-  puts the edge at the frame border on every cut. Compare against a rolling baseline of the wall
-  beside it instead: a falloff is a drift, and a person is a step.
-- **You cannot recover what sits behind hair by measuring over time.** Median returns hair.
-  Median over unsaturated pixels returns hair. Least saturated returns a blown-out flyaway and
-  comes back brighter than the wall. Borrow the patch from flat wall in the same frame instead,
-  because borrowed pixels carry that frame's own grain and exposure and therefore do not crawl.
-- **HSV saturation calls a dark neutral colourful**, which protects a fixture's cast shadow and
-  leaves it hanging in mid-air. Undivided chroma does not.
-- **Rasterize caption text with Pillow.** Homebrew ffmpeg often ships with no text renderer.
-- **One-word captions blink.** A single word disappears in every inter-word gap and 30 to 80ms
-  intra-phrase gaps strobe, so hold each word until the next arrives when the gap is under 0.28s.
-  A real pause still clears the frame.
-- **Assert sync, do not eyeball it.** `assemble-cuts.py` refuses to call a render finished until
-  video timestamps sit on the frame grid and audio matches picture. That check exists because a
-  drift once shipped in a render where everything else verified clean, and the only broken property
-  was the one nobody had checked.
+- **Resolve phone rotation before any geometry.** Metadata and pixels disagree until you do.
+- **Run face detection on a square crop**, not the full frame.
+- **Transcribe per speech span.** A long silence makes a transcriber invent sentences.
+- **Rasterize caption text with Pillow.** Most ffmpeg builds ship with no text renderer.
+- **Never measure a subject edge against one wall reference.** A room falls off in brightness across the
+  frame, about 15 levels in mine. A naive detector calls that gradient a person and pins the edge at
+  the frame border on every cut. Compare each column against a rolling baseline of the wall beside it: a
+  falloff is a drift, a person is a step.
+- **You cannot recover what sits behind hair by measuring over time.** Median returns hair. Median over
+  unsaturated pixels returns hair. Least-saturated returns a blown-out flyaway brighter than the wall.
+  Borrow the patch from flat wall in the same frame instead, so it carries that frame's own grain and does
+  not crawl.
+- **HSV saturation calls a dark neutral colourful**, which protects an object's cast shadow and leaves it
+  floating in mid-air. Use undivided chroma.
+- **One-word captions strobe** unless each word holds until the next arrives when the gap is under 0.28s.
+- **macOS ships bash 3.2**, where an empty array under `set -u` is unbound, so a plain `"${ARR[@]}"` aborts
+  a rebuild on the first vertical cut. Use `${ARR[@]+"${ARR[@]}"}`.
 
 ## Standing decisions
 
-Not preferences. These were each measured, and re-litigating them costs a rebuild.
+Measured, not preferences.
 
-- **Layout numbers are measured off rendered footage, never typed.** The constant that
-  `subject-bounds.py` replaced was 286 pixels wrong, which is why every graphic had been small.
-- **16:9 puts screen recordings in the column beside the speaker**, not full frame. 9:16 keeps the
-  full-frame cutaway, because in vertical the speaker spans the whole width and there is no wall.
-- **Cards scale by one factor** covering type, padding, radius, and shadow, so card size is a
-  property of the measured geometry rather than a pile of numbers.
-- **Captions: one word, white, black outline, no yellow**, at 0.032 of frame height.
-- **Every claim on a card has to be true and checkable.** The product's own price and access terms.
-  No install counts, no ratings, no invented numbers.
-- **Hardware encode by default** (`h264_videotoolbox`), measured faster with no visible cost.
-
-## What this is not
-
-It is not a model that edits video for you, and it is not a hosted service. There is no upload
-step, so your footage and your voice stay on your own machine. That was the point.
+- **Layout numbers are measured off rendered footage, never typed.**
+- **Landscape puts screen recordings in the column beside the speaker.** Vertical keeps the full-frame
+  cutaway, because there the speaker spans the whole width and there is no wall.
+- **Cards scale by one factor** across type, padding, radius and shadow.
+- **Captions: one word, white, black outline, 0.032 of frame height.**
+- **Every claim on a card has to be checkable.** No install counts, no ratings, no invented numbers.
+- **Hardware encode by default** (`h264_videotoolbox`), measured faster at no visible cost.
 
 ## License
 
