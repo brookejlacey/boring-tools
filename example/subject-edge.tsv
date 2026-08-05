@@ -1,0 +1,21 @@
+# id	frame	label	edge_px
+001	wide	hook	999
+002	mid	nod-along	1104
+003	close	smile-and-nod	1124
+004	wide	25-years-nobody-taught-you	972
+005	mid	expecting-it-not-that-hard	1109
+006	close	heres-where-it-sucks	1139
+007	wide	wall-of-text	975
+008	mid	dont-know-what-to-ask	1117
+009	wide	reading-like-2019	965
+010	close	five-minutes-fixes-that	1129
+011	mid	app-i-built-called-jayla	1107
+012	wide	one-small-puzzle	946
+013	mid	move-the-pieces	1116
+014	close	saves-to-playbook	1136
+015	wide	monday-not-from-nothing	981
+016	mid	jayla-gets-harder	1113
+017	close	dont-age-out	1151
+018	mid	first-three-free-jaylaapp	1111
+019	close	see-you-in-there	1143
+#max	1151

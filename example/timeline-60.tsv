@@ -1,0 +1,20 @@
+# id	out_start	src_start	frames	dur	frame	label
+001	0.000000	23.850000	127	4.233333	wide	hook
+002	4.233333	28.590000	43	1.433333	mid	nod-along
+003	5.666667	30.770000	69	2.300000	close	smile-and-nod
+004	7.966667	38.890000	154	5.133333	wide	25-years-nobody-taught-you
+005	13.100000	50.250000	117	3.900000	mid	expecting-it-not-that-hard
+006	17.000000	57.890000	30	1.000000	close	heres-where-it-sucks
+007	18.000000	59.290000	112	3.733333	wide	wall-of-text
+008	21.733333	63.270000	87	2.900000	mid	dont-know-what-to-ask
+009	24.633333	76.410000	93	3.100000	wide	reading-like-2019
+010	27.733333	89.970000	58	1.933333	close	five-minutes-fixes-that
+011	29.666667	93.930000	51	1.700000	mid	app-i-built-called-jayla
+012	31.366667	134.950000	87	2.900000	wide	one-small-puzzle
+013	34.266667	142.110000	96	3.200000	mid	move-the-pieces
+014	37.466667	153.090000	76	2.533333	close	saves-to-playbook
+015	40.000000	200.730000	152	5.066667	wide	monday-not-from-nothing
+016	45.066667	212.030000	82	2.733333	mid	jayla-gets-harder
+017	47.800000	216.870000	42	1.400000	close	dont-age-out
+018	49.200000	275.350000	115	3.833333	mid	first-three-free-jaylaapp
+019	53.033333	279.550000	24	0.800000	close	see-you-in-there

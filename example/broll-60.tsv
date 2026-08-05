@@ -1,0 +1,11 @@
+# out_start	out_end	image
+31.37	34.27	assets/screens/04-exercise.png
+34.27	37.47	assets/screens/05-resultsheet.png
+# holds 1.20s past the 40.00 cut boundary: "saves to the playbook" is the setup and
+# "on Monday I'm not starting from nothing" is the payoff, so the screen must not
+# leave on the payoff line. Same shape as the hold in broll-15/30.
+37.47	41.20	assets/screens/07-playbook.png
+# "Jayla keeps getting harder as I get better": the learn path IS that claim, so
+# it shows rather than being asserted. Now affordable because a screen in the
+# column costs a card window, not the whole frame.
+45.07	47.80	assets/screens/03-learn-path.png
