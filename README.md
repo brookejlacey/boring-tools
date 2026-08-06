@@ -13,12 +13,21 @@ You don't need to be technical for this. You need to know what you want.
 
 ## Do this
 
-**A. Install the two free things.**
+**A. Install the free parts.** This is a macOS tool. Apple Silicon is what the fast encode wants.
 
 ```
 brew install ffmpeg whisper-cpp
-pip install pillow numpy
+pip3 install pillow numpy opencv-python mediapipe
+mkdir -p ~/.cache/whisper
+curl -L -o ~/.cache/whisper/ggml-small.en.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
 ```
+
+The last one is the speech model, about 500MB. It reads your words off the audio, so captions and
+dead-air cutting both need it.
+
+If pip refuses with `externally-managed-environment`, add `--break-system-packages`. That is
+Homebrew guarding its own Python and these are ordinary libraries.
 
 **B. Give your agent the instructions.**
 
@@ -99,10 +108,12 @@ You are not meant to edit those files by hand. They exist so the agent has somet
 | 12 | `wall-clean.py` | Removes a fixed object from a wall across a whole take by borrowing clean wall from the same frame. |
 | 13 | `verify.py` | Dimensions, frame count, audio against video, drift off the grid. Non-zero exit on failure. |
 
-Extras: `blur-background.py`, `clip_rank.py`, `tighten.sh`, `cut-silence.sh`, `assemble-spans.sh`.
+Extras: `blur-background.py` (wants `pip install torch`, which the rest of the chain does not),
+`clip_rank.py`, `tighten.sh`, `cut-silence.sh`, `assemble-spans.sh`.
 
-One `rebuild.sh` per shoot runs the whole chain in order. `example/` holds the real cut list, timeline
-and measured geometry from the shoot this was built on.
+One `rebuild.sh` per shoot runs the chain in order. `example/rebuild.sh` is the real one from the
+shoot this was built on, sitting next to its cut list, timeline and measured geometry. `verify.py`
+you run over the finished renders yourself. It exits non-zero if any of them is wrong.
 
 ## Failure modes already paid for
 

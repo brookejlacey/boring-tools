@@ -31,11 +31,20 @@ def probe(path, stream, fields):
 
 
 def packet_times(path):
+    """Presentation timestamps, in presentation order.
+
+    ffprobe lists packets in DECODE order, and any encoder with B-frames emits
+    them reordered, so the nth packet is not the nth frame on screen. Comparing
+    that sequence against an n/fps grid reports a correct libx264 render as
+    100ms adrift and fails it. videotoolbox emits no B-frames, which is why the
+    default path never showed it. Sort before measuring: the grid is a property
+    of presentation time, not of decode order.
+    """
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-show_entries", "packet=pts_time", "-of", "csv=p=0", path],
         capture_output=True, text=True).stdout.split()
-    return [float(x) for x in out if x.strip()]
+    return sorted(float(x) for x in out if x.strip())
 
 
 def main():

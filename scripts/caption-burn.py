@@ -82,6 +82,15 @@ def words_for(src, start, dur, work, tag):
     resets in it is exactly the case that breaks them. A cut is short and dense,
     which is where they hold.
     """
+    # Fail loudly on a missing model. whisper-cli exits 3 and writes no json,
+    # capture_output swallows the reason, and the empty word list that follows
+    # renders as a clean video with no captions on it. A silent no-op is the
+    # worst failure this tool has, so it is the one thing checked by hand.
+    if not os.path.exists(MODEL):
+        sys.exit(f"caption-burn: no whisper model at {MODEL}\n"
+                 f"  mkdir -p {os.path.dirname(MODEL)}\n"
+                 f"  curl -L -o {MODEL} \\\n"
+                 f"    https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin")
     wav = os.path.join(work, f"{tag}.wav")
     subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-ss", f"{start:.6f}",
                     "-t", f"{dur:.6f}", "-i", src, "-vn", "-ac", "1", "-ar", "16000",

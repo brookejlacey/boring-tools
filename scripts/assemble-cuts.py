@@ -133,7 +133,12 @@ def verify_sync(out, fps, tol_ms=1.0):
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-show_entries", "packet=pts_time", "-of", "csv=p=0", out],
         capture_output=True, text=True).stdout.split()
-    t = [float(x) for x in pts if x.strip()]
+    # Sorted, not as listed. ffprobe reports packets in DECODE order, so an
+    # encoder with B-frames hands back a reordered sequence and the nth packet
+    # is not the nth frame on screen. Measured against an n/fps grid that reads
+    # as 100ms of drift on a render that is actually perfect, which would fail
+    # every --x264 assembly. The grid is a property of presentation time.
+    t = sorted(float(x) for x in pts if x.strip())
 
     problems = []
     if t:

@@ -1,2 +1,7 @@
 pillow
 numpy
+opencv-python
+mediapipe
+
+# blur-background.py only. The rest of the chain does not need it.
+# torch
